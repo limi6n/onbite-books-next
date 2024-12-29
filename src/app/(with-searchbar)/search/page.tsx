@@ -31,11 +31,10 @@ export default async function Page({
     q?: string;
   }>;
 }) {
-  const searchParam = (await searchParams).q;
-
+  const { q } = await searchParams;
   return (
-    <Suspense key={searchParam || ""} fallback={<BookListSkeleton count={3} />}>
-      <SearchResult q={searchParam || ""} />
+    <Suspense key={q || ""} fallback={<BookListSkeleton count={3} />}>
+      <SearchResult q={q || ""} />
     </Suspense>
   );
 }
