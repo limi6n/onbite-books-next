@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
 import style from "./page.module.css";
+import { ReviewData } from "@/types";
+import ReviewItem from "@/components/review-item";
+import ReviewEditor from "@/components/review-editor";
 
 // build 타임에 해당 페이지를 정적 페이지로 생성하게 됨.
 export function generateStaticParams() {
@@ -41,42 +44,22 @@ async function BookDetail({ bookId }: { bookId: string }) {
   );
 }
 
-function ReviewEditor({ bookId }: { bookId: string }) {
-  async function createReviewAction(formData: FormData) {
-    "use server";
+async function ReviewList({ bookId }: { bookId: string }) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/review/book/${bookId}`,
+    { next: { tags: [`review-${bookId}`] } }
+  );
 
-    const content = formData.get("contnet")?.toString;
-    const author = formData.get("author")?.toString;
-
-    if (!content || !author) {
-      return;
-    }
-
-    console.log(bookId);
-    console.log(content);
-    console.log(author);
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_URL}/review`, {
-        method: "POST",
-        body: JSON.stringify({
-          bookId,
-          content,
-          author,
-        }),
-      });
-      console.log(response.body);
-    } catch (err) {
-      console.error(err);
-    }
+  if (!response.ok) {
+    throw new Error(`Review fetch failed : ${response.statusText}`);
   }
+
+  const reviews: ReviewData[] = await response.json();
   return (
     <section>
-      <form action={createReviewAction}>
-        <input required name="content" placeholder="리뷰 내용" />
-        <input required name="author" placeholder="작성자" />
-        <button type="submit">작성하기</button>
-      </form>
+      {reviews.map((review) => (
+        <ReviewItem key={`review-item-${review.id}`} {...review} />
+      ))}
     </section>
   );
 }
@@ -92,6 +75,7 @@ export default async function Page({
     <div className={style.container}>
       <BookDetail bookId={id} />
       <ReviewEditor bookId={id} />
+      <ReviewList bookId={id} />
     </div>
   );
 }
